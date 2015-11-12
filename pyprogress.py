@@ -368,6 +368,14 @@ if __name__ == '__main__':
             s.stop()
             s.join()
             del s
+        try:
+            c
+        except NameError:
+            pass
+        else:
+            c.stop()
+            c.join()
+            del c
         sys.exit()
     signal.signal(signal.SIGINT, sigint_handler)
 
