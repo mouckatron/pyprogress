@@ -255,6 +255,45 @@ class Spinner(threading.Thread):
         self._finished = True
 
 
+class Counter(threading.Thread):
+
+    def __init__(self, total=None, inital=0):
+        threading.Thread.__init__(self)
+        self.daemon = True
+        self._finished = False
+        self.counter = inital
+        self.total = total
+        self.write = self._write1 if total is not None else self._write2
+        self._strlen = 0
+
+    def inc(self, value=1):
+        self.counter += value
+
+    def _write1(self):
+        """ write with total """
+        s = "{}/{}".format(self.counter, self.total)
+        sys.stdout.write("\b"*self._strlen)
+        sys.stdout.write(s)
+        sys.stdout.flush()
+        self._strlen = len(s)
+
+    def _write2(self):
+        """ write without total"""
+        sys.stdout.write("\b"*self._strlen)
+        sys.stdout.write(str(self.counter))
+        sys.stdout.flush()
+        self._strlen = len(str(self.counter))
+
+    def run(self):
+        while not self._finished:
+            self.write()
+            time.sleep(1)
+        self.write()
+
+    def stop(self):
+        self._finished = True
+
+
 if __name__ == '__main__':
     import random
     import signal
