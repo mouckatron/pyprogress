@@ -2,24 +2,34 @@
 #-*- coding: utf-8 -*-
 
 import sys
-from pyprogress import Counter
 
-if len(sys.argv) > 1:
-    total = sys.argv[1]
+if '--total' in sys.argv:
+    total = sys.argv[sys.argv.index('--total')+1]
 else:
     total = None
 
-c = Counter(total=total)
+if '--pb' in sys.argv and total is not None:
+    from pyprogress import ThreadedProgressBar
+    c = ThreadedProgressBar(int(total), timecount=True, completionprediction=True)
+else:
+    from pyprogress import Counter
+    c = Counter(total=total)
 c.start()
 
 while True:
-    line = sys.stdin.readline()
-    if len(line) > 0:
-        c.inc()
-    else:
+    try:
+        line = sys.stdin.readline()
+        if len(line) > 0:
+            c.inc()
+        else:
+            break
+    except KeyboardInterrupt:
         break
 
-c.stop()
+if '--pb' in sys.argv and total is not None:
+    c.finish()
+else:
+    c.stop()
 c.join()
 
 print ""
