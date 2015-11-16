@@ -25,6 +25,8 @@ class ProgressBar(object):
 
         self._progress = 0L
         self._pstr = ""
+        self._lenpstr = 0
+        self._maxpstr = 0
 
         self._ended = False
         self._timecount = timecount
@@ -78,7 +80,7 @@ class ProgressBar(object):
 
     def write(self):
 
-        sys.stdout.write("\b"*len(self._pstr))
+        sys.stdout.write("\b"*self._maxpstr)
         if self._timecount is not False:
             self._runtime = (datetime.datetime.utcnow() - self._timecount)
         try:
@@ -92,7 +94,11 @@ class ProgressBar(object):
             "p": self._progress,
             "t": self._total
         })
+        self._lenpstr = len(self._pstr)
+        if self._lenpstr > self._maxpstr:
+            self._maxpstr = self._lenpstr
         sys.stdout.write(self._pstr)
+        sys.stdout.write(" " * (self._maxpstr - self._lenpstr))  # add spaces to the max length the string ever was to clear any extra characters
         sys.stdout.flush()
 
 
@@ -209,7 +215,7 @@ class DoubleProgressBar(ProgressBar):
         self.write()
 
     def write(self):
-        sys.stdout.write("\b"*(len(self._pstr)+len(self._pstr2)))
+        sys.stdout.write("\b"*self._maxpstr)
         if self._timecount is not False:
             self._runtime = (datetime.datetime.utcnow() - self._timecount)
         self._pstr = self._pstr_fmt.format(**{
@@ -229,7 +235,11 @@ class DoubleProgressBar(ProgressBar):
         except ZeroDivisionError:
             fmt2['pc'] = ''
         self._pstr2 = self._pstr2_fmt.format(**fmt2)
+        self._lenpstr = len(self._pstr+self._pstr2)
+        if self._lenpstr > self._maxpstr:
+            self._maxpstr = self._lenpstr
         sys.stdout.write(self._pstr+self._pstr2)
+        sys.stdout.write(" " * (self._maxpstr - self._lenpstr))  # add spaces to the max length the string ever was to clear any extra characters
         sys.stdout.flush()
 
 
