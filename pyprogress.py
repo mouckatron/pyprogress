@@ -34,10 +34,11 @@ class ProgressBar(object):
         self._completionprediction = completionprediction
         self._cp_timeavg = None
 
-        self._pstr_fmt = "%s%s[{pc:%s}]%s" % ("{timecount} " if timecount else "",
+        self._pstr_fmt = "%s%s[{pc:%s}]%s%s" % ("{timecount} " if timecount else "",
                                               "{completionprediction} " if completionprediction else "",
                                               width,
-                                              " {p}/{t}" if showcounter else "")
+                                              " {p}/{t}" if showcounter else "",
+                                              " {ips}/s" if not isinstance(self, DoubleProgressBar) else "")
 
     def __del__(self):
         self.end()
@@ -47,6 +48,12 @@ class ProgressBar(object):
             # return "{} {} {} {} {}".format(self._runtime.seconds, self._progress, (float(self._runtime.seconds) / float(self._progress)), self._total, (self._total - self._progress))
             # ( current runtime / current progress ) * ( total items - current progress )
             return "{:.3f}".format(((float(self._runtime.seconds) / float(self._progress)) * (self._total - self._progress)))
+        except ZeroDivisionError:
+            return None
+
+    def _item_per_sec(self):
+        try:
+            return "{:.3f}".format(float(self._progress) / self._runtime.seconds)
         except ZeroDivisionError:
             return None
 
@@ -92,7 +99,8 @@ class ProgressBar(object):
             "completionprediction": (str(self._predict_completion()) if self._completionprediction else ''),
             "pc": pc,
             "p": self._progress,
-            "t": self._total
+            "t": self._total,
+            "ips": self._item_per_sec()
         })
         self._lenpstr = len(self._pstr)
         if self._lenpstr > self._maxpstr:
@@ -161,7 +169,8 @@ class DoubleProgressBar(ProgressBar):
         self._progress2 = 0L
         self._pstr2 = ""
 
-        self._totalcount = None if not totalcount else 0L
+        self.totalcount = totalcount
+        self._totalcount = 0L
         if completionprediction:
             self._cp_timeavg2 = None
             if total2 is not None:
@@ -171,7 +180,7 @@ class DoubleProgressBar(ProgressBar):
                 self._cp_sizecnt2 = 0
                 self._cp_sizeavg2 = 0
 
-        self._pstr2_fmt = " [{pc:%s}]%s%s    " % (
+        self._pstr2_fmt = " [{pc:%s}]%s%s {ips}/s" % (
                                                           int((width/2.0)),
                                                           " {p}/{t}" if showcounter else "",
                                                           "  total:{tc}" if totalcount else "")
@@ -190,20 +199,24 @@ class DoubleProgressBar(ProgressBar):
         except ZeroDivisionError:
             return None
 
+    def _item_per_sec(self):
+        try:
+            return "{:.3f}".format(float(self._totalcount) / self._runtime.seconds)
+        except ZeroDivisionError:
+            return None
+
     def total2(self, total):
         self._total2 = total
         self._cp_sizecnt2 += 1
         self._cp_sizeavg2 += ((total - self._cp_sizeavg2) / self._cp_sizecnt2)
 
     def update2(self, progress):
-        if self._totalcount is not None:
-            self._totalcount += (progress - self._progress2)
+        self._totalcount += (progress - self._progress2)
         self._progress2 = progress
         self._write()
 
     def inc2(self):
-        if self._totalcount is not None:
-            self._totalcount += 1
+        self._totalcount += 1
         self._progress2 += 1
         self._write()
 
@@ -228,7 +241,8 @@ class DoubleProgressBar(ProgressBar):
         fmt2 = {
             "p": self._progress2,
             "t": self._total2,
-            "tc": self._totalcount if self._totalcount is not None else ''
+            "tc": self._totalcount if self.totalcount is not None else '',
+            "ips": self._item_per_sec()
         }
         try:
             fmt2['pc'] = self._progresschar * int((((self._width/2.0)/self._total2)*self._progress2))
