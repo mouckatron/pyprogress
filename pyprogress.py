@@ -9,7 +9,7 @@ import time
 
 class ProgressBar(object):
     """Show a progress bar and update it everytime increment is called"""
-    def __init__(self, total, width=40, name="", showcounter=True, progresschar="#", timecount=False, completionprediction=False):
+    def __init__(self, total, width=40, name="", showcounter=True, progresschar="#", timecount=False, completionprediction=False, colored=False):
         """
         :param int total: The total count of items being worked on
         :param int width: The width of the progress bar to output, default 40
@@ -17,11 +17,13 @@ class ProgressBar(object):
         :param str progresschar: The character to use in the progress bar, default '#'
         :param boolean timecount: Show the time counter
         :param boolean completionprediction: Show the completion prediction time counter
+        :param boolean colored: Color the Items per Second if increased or decreased
         """
         self._total = total
         self._width = float(width)
         self._name = name
         self._progresschar = progresschar
+        self._ips_colored = colored
 
         self._progress = 0L
         self._pstr = ""
@@ -33,12 +35,13 @@ class ProgressBar(object):
         self._runtime = None
         self._completionprediction = completionprediction
         self._cp_timeavg = None
+        self._ips_previous = 0
 
         self._pstr_fmt = "%s%s[{pc:%s}]%s%s" % ("{timecount} " if timecount else "",
-                                              "{completionprediction} " if completionprediction else "",
-                                              width,
-                                              " {p}/{t}" if showcounter else "",
-                                              " {ips}/s" if not isinstance(self, DoubleProgressBar) else "")
+                                                "{completionprediction} " if completionprediction else "",
+                                                width,
+                                                " {p}/{t}" if showcounter else "",
+                                                " {ips}/s" if not isinstance(self, DoubleProgressBar) else "")
 
     def __del__(self):
         self.end()
@@ -53,9 +56,19 @@ class ProgressBar(object):
 
     def _item_per_sec(self):
         try:
-            return "{:.3f}".format(float(self._progress) / self._runtime.seconds)
+            _value = float(self._progress) / self._runtime.seconds
         except ZeroDivisionError:
             return None
+        else:
+            if self._ips_colored:
+                if _value >= self._ips_previous:
+                    s = "\033[92m{:.3f}\033[0m".format(_value)
+                else:
+                    s = "\033[91m{:.3f}\033[0m".format(_value)
+                self._ips_previous = _value
+            else:
+                s = "{:.3f}".format(_value)
+        return s
 
     def begin(self):
         if self._timecount or self._completionprediction:
@@ -102,7 +115,7 @@ class ProgressBar(object):
             "t": self._total,
             "ips": self._item_per_sec()
         })
-        self._lenpstr = len(self._pstr)
+        self._lenpstr = len(self._pstr) if self._ips_colored is False else len(self._pstr)-9
         if self._lenpstr > self._maxpstr:
             self._maxpstr = self._lenpstr
         sys.stdout.write(self._pstr)
@@ -112,7 +125,7 @@ class ProgressBar(object):
 
 class ThreadedProgressBar(ProgressBar, threading.Thread):
 
-    def __init__(self, total, width=40, name="", showcounter=True, progresschar="#", timecount=False, completionprediction=False):
+    def __init__(self, total, width=40, name="", showcounter=True, progresschar="#", timecount=False, completionprediction=False, colored=False):
         """
         :param int total: The total count of items being worked on
         :param int width: The width of the progress bar to output, default 40
@@ -122,7 +135,7 @@ class ThreadedProgressBar(ProgressBar, threading.Thread):
         :param boolean timecount: Show the time counter
         :param boolean completionprediction: Show the completion prediction time counter
         """
-        super(ThreadedProgressBar, self).__init__(total, width, name, showcounter, progresschar, timecount, completionprediction)
+        super(ThreadedProgressBar, self).__init__(total, width, name, showcounter, progresschar, timecount, completionprediction, colored=colored)
 
         self._finished = False
         threading.Thread.__init__(self)
@@ -149,7 +162,7 @@ class ThreadedProgressBar(ProgressBar, threading.Thread):
 
 class DoubleProgressBar(ProgressBar):
 
-    def __init__(self, total, total2, width=40, name="", showcounter=True, progresschar="#", totalcount=False, timecount=False, completionprediction=False):
+    def __init__(self, total, total2, width=40, name="", showcounter=True, progresschar="#", totalcount=False, timecount=False, completionprediction=False, colored=False):
         """
         :param int total: The total count of items being worked on
         :param int total2: The total count of the subtask items being worked on
@@ -162,7 +175,14 @@ class DoubleProgressBar(ProgressBar):
         :param boolean completionprediction: Show the completion prediction time counter
         """
 
-        super(DoubleProgressBar, self).__init__(total, width=width, name=name, showcounter=showcounter, progresschar=progresschar, timecount=timecount, completionprediction=completionprediction)
+        super(DoubleProgressBar, self).__init__(total,
+                                                width=width,
+                                                name=name,
+                                                showcounter=showcounter,
+                                                progresschar=progresschar,
+                                                timecount=timecount,
+                                                completionprediction=completionprediction,
+                                                colored=colored)
 
         self._total2 = total2
 
@@ -201,9 +221,18 @@ class DoubleProgressBar(ProgressBar):
 
     def _item_per_sec(self):
         try:
-            return "{:.3f}".format(float(self._totalcount) / self._runtime.seconds)
+            _value = float(self._totalcount) / self._runtime.seconds
         except ZeroDivisionError:
             return None
+        else:
+            if self._ips_colored:
+                if _value > self._ips_previous:
+                    return "\033[92m{:.3f}\033[0m".format(_value)
+                else:
+                    return "\033[91m{:.3f}\033[0m".format(_value)
+                self._ips_previous = _value
+            else:
+                return "{:.3f}".format(_value)
 
     def total2(self, total):
         self._total2 = total
@@ -249,7 +278,7 @@ class DoubleProgressBar(ProgressBar):
         except ZeroDivisionError:
             fmt2['pc'] = ''
         self._pstr2 = self._pstr2_fmt.format(**fmt2)
-        self._lenpstr = len(self._pstr+self._pstr2)
+        self._lenpstr = len(self._pstr+self._pstr2) if self._ips_colored is False else len(self._pstr+self._pstr2)-9
         if self._lenpstr > self._maxpstr:
             self._maxpstr = self._lenpstr
         sys.stdout.write(self._pstr+self._pstr2)
@@ -259,7 +288,7 @@ class DoubleProgressBar(ProgressBar):
 
 class ThreadedDoubleProgressBar(DoubleProgressBar, threading.Thread):
 
-    def __init__(self, total, total2, width=40, name="", showcounter=True, progresschar="#", totalcount=False, timecount=False, completionprediction=False):
+    def __init__(self, total, total2, width=40, name="", showcounter=True, progresschar="#", totalcount=False, timecount=False, completionprediction=False, colored=False):
         """
         :param int total: The total count of items being worked on
         :param int total2: The total count of the subtask items being worked on
@@ -271,7 +300,16 @@ class ThreadedDoubleProgressBar(DoubleProgressBar, threading.Thread):
         :param boolean timecount: Show the time counter
         :param boolean completionprediction: Show the completion prediction time counter
         """
-        super(ThreadedDoubleProgressBar, self).__init__(total, total2, width=width, name=name, showcounter=showcounter, progresschar=progresschar, totalcount=totalcount, timecount=timecount, completionprediction=completionprediction)
+        super(ThreadedDoubleProgressBar, self).__init__(total,
+                                                        total2,
+                                                        width=width,
+                                                        name=name,
+                                                        showcounter=showcounter,
+                                                        progresschar=progresschar,
+                                                        totalcount=totalcount,
+                                                        timecount=timecount,
+                                                        completionprediction=completionprediction,
+                                                        colored=colored)
 
         self._finished = False
         threading.Thread.__init__(self)
@@ -406,7 +444,7 @@ if __name__ == '__main__':
     # SINGLE PROGRESS BAR
     if len(sys.argv) == 1 or '--pb' in sys.argv:
         firstsize = 10
-        pb = ProgressBar(firstsize, name="ProgressBar", timecount=False, completionprediction=True)
+        pb = ProgressBar(firstsize, name="ProgressBar", timecount=False, completionprediction=True, colored=True)
         pb.begin()
 
         for x in xrange(firstsize):
@@ -418,7 +456,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1 or '--dpb' in sys.argv:
         firstsize = 10
         secondsize = random.randint(5, 15)
-        pb = DoubleProgressBar(firstsize, secondsize, name="DoubleProgressBar", totalcount=True, timecount=True, completionprediction=True)
+        pb = DoubleProgressBar(firstsize, secondsize, name="DoubleProgressBar", totalcount=True, timecount=True, completionprediction=True, colored=True)
         pb.begin()
 
         for x in xrange(firstsize):
@@ -434,7 +472,7 @@ if __name__ == '__main__':
     # THREADED PROGRESS BAR
     if len(sys.argv) == 1 or '--tpb' in sys.argv:
         firstsize = 10
-        tpb = ThreadedProgressBar(firstsize, name="ThreadedProgressBar", timecount=True, completionprediction=True)
+        tpb = ThreadedProgressBar(firstsize, name="ThreadedProgressBar", timecount=True, completionprediction=True, colored=True)
         tpb.start()
 
         for x in xrange(firstsize):
@@ -449,7 +487,7 @@ if __name__ == '__main__':
     if len(sys.argv) == 1 or '--tdpb' in sys.argv:
         firstsize = 5
         secondsize = random.randint(3, 5)
-        tdpb = ThreadedDoubleProgressBar(firstsize, secondsize, name="ThreadedDoubleProgressBar", totalcount=True, timecount=True, completionprediction=True)
+        tdpb = ThreadedDoubleProgressBar(firstsize, secondsize, name="ThreadedDoubleProgressBar", totalcount=True, timecount=True, completionprediction=True, colored=True)
         tdpb.start()
 
         for x in xrange(firstsize):

@@ -10,7 +10,7 @@ else:
 
 if '--pb' in sys.argv and total is not None:
     from pyprogress import ThreadedProgressBar
-    c = ThreadedProgressBar(int(total), timecount=True, completionprediction=True)
+    c = ThreadedProgressBar(int(total), timecount=True, completionprediction=True, colored=True)
 else:
     from pyprogress import Counter
     c = Counter(total=total)
