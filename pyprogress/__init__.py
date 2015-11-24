@@ -25,7 +25,7 @@ class ProgressBar(object):
         self._progresschar = progresschar
         self._ips_colored = colored
 
-        self._progress = 0L
+        self._progress = 0
         self._pstr = ""
         self._lenpstr = 0
         self._maxpstr = 0
@@ -186,11 +186,11 @@ class DoubleProgressBar(ProgressBar):
 
         self._total2 = total2
 
-        self._progress2 = 0L
+        self._progress2 = 0
         self._pstr2 = ""
 
         self.totalcount = totalcount
-        self._totalcount = 0L
+        self._totalcount = 0
         if completionprediction:
             self._cp_timeavg2 = None
             if total2 is not None:
@@ -250,7 +250,7 @@ class DoubleProgressBar(ProgressBar):
         self._write()
 
     def reset2(self):
-        self._progress2 = 0L
+        self._progress2 = 0
         self._write()
 
     def _write(self):
@@ -339,6 +339,7 @@ class Spinner(threading.Thread):
     def __init__(self):
         """Simple waiting spinner, no options"""
         threading.Thread.__init__(self)
+        self.daemon = True
         self._finished = False
         self._spinner = itertools.cycle(['-', '/', '|', '\\'])
 
@@ -447,7 +448,7 @@ if __name__ == '__main__':
         pb = ProgressBar(firstsize, name="ProgressBar", timecount=False, completionprediction=True, colored=True)
         pb.begin()
 
-        for x in xrange(firstsize):
+        for x in range(firstsize):
             pb.inc()
             time.sleep(random.random()*2)
         pb.end()
@@ -459,11 +460,11 @@ if __name__ == '__main__':
         pb = DoubleProgressBar(firstsize, secondsize, name="DoubleProgressBar", totalcount=True, timecount=True, completionprediction=True, colored=True)
         pb.begin()
 
-        for x in xrange(firstsize):
+        for x in range(firstsize):
             pb.inc()
             pb.reset2()
             pb.total2(secondsize)
-            for y in xrange(secondsize):
+            for y in range(secondsize):
                 pb.inc2()
                 time.sleep(random.random())
             secondsize = random.randint(5, 15)
@@ -475,7 +476,7 @@ if __name__ == '__main__':
         tpb = ThreadedProgressBar(firstsize, name="ThreadedProgressBar", timecount=True, completionprediction=True, colored=True)
         tpb.start()
 
-        for x in xrange(firstsize):
+        for x in range(firstsize):
             tpb.inc()
             time.sleep(random.random()*2)
 
@@ -490,11 +491,11 @@ if __name__ == '__main__':
         tdpb = ThreadedDoubleProgressBar(firstsize, secondsize, name="ThreadedDoubleProgressBar", totalcount=True, timecount=True, completionprediction=True, colored=True)
         tdpb.start()
 
-        for x in xrange(firstsize):
+        for x in range(firstsize):
             tdpb.inc()
             tdpb.reset2()
             tdpb.total2(secondsize)
-            for y in xrange(secondsize):
+            for y in range(secondsize):
                 tdpb.inc2()
                 time.sleep(random.random())
             secondsize = random.randint(3, 5)
