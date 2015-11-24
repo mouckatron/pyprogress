@@ -359,7 +359,7 @@ class Spinner(threading.Thread):
 
 class Counter(threading.Thread):
 
-    def __init__(self, total=None, inital=0):
+    def __init__(self, total=None, initial=0):
         """Simple progress counter
 
         :param total: The total items being worked on if available
@@ -369,7 +369,7 @@ class Counter(threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
         self._finished = False
-        self.counter = inital
+        self.counter = initial
         self.total = total
         self.write = self._write1 if total is not None else self._write2
         self._strlen = 0
