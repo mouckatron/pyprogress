@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1'
+version = '0.1.dev1'
 
 setup(name='pyprogress',
       version=version,
@@ -12,11 +12,11 @@ setup(name='pyprogress',
       keywords='progress spinner counter cli timer completion',
       author='Graham Moucka',
       author_email='mouckatron@gmail.com',
-      url='',
+      url='https://github.com/mouckatron/pyprogress',
       license='MIT',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
-      zip_safe=True,
+      zip_safe=False,
       install_requires=[
           # -*- Extra requirements: -*-
       ],
