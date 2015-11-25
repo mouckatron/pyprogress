@@ -1,16 +1,16 @@
 
-import unittest
+import test
 import pyprogress
 from time import sleep
 
 
-class TestSpinner(unittest.TestCase):
+class TestSpinner(test.TestStdoutReader):
 
     def test_spinner(self):
+        output = ['|', '\b', '/', '\b', '-', '\b', '\\', '\b', '|', '\b', '/', '\b', '-', '\b']
         s = pyprogress.Spinner()
         s.start()
         sleep(2)
         s.stop()
-
-if __name__ == '__main__':
-    unittest.main()
+        s.join()
+        assert self.stdout.getvalue().strip() == ''.join(output[:len(self.stdout.getvalue().strip())])
