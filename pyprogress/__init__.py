@@ -41,18 +41,16 @@ class ProgressBar(object):
                                                 "{completionprediction} " if completionprediction else "",
                                                 width,
                                                 " {p}/{t}" if showcounter else "",
-                                                " {ips}/s" if not isinstance(self, DoubleProgressBar) else "")
+                                                " {ips}/s" if not isinstance(self, DoubleProgressBar) and self._timecount else "")
 
     def __del__(self):
         self.end()
 
     def _predict_completion(self):
         try:
-            # return "{} {} {} {} {}".format(self._runtime.seconds, self._progress, (float(self._runtime.seconds) / float(self._progress)), self._total, (self._total - self._progress))
-            # ( current runtime / current progress ) * ( total items - current progress )
             return "{:.3f}".format(((float(self._runtime.seconds) / float(self._progress)) * (self._total - self._progress)))
         except ZeroDivisionError:
-            return None
+            return ''
 
     def _item_per_sec(self):
         try:
@@ -91,8 +89,8 @@ class ProgressBar(object):
         self._progress = progress
         self._write()
 
-    def inc(self):
-        self._progress += 1
+    def inc(self, value=1):
+        self._progress += value
         self._write()
 
     def _write(self):
@@ -107,13 +105,16 @@ class ProgressBar(object):
             pc = self._progresschar * int(((self._width/self._total)*self._progress))
         except ZeroDivisionError:
             pc = ""
+        finally:
+            if len(pc) > int(self._width):
+                pc = pc[:int(self._width)]
         self._pstr = self._pstr_fmt.format(**{
             "timecount": (str(self._runtime) if self._timecount else ''),
             "completionprediction": (str(self._predict_completion()) if self._completionprediction else ''),
             "pc": pc,
             "p": self._progress,
             "t": self._total,
-            "ips": self._item_per_sec()
+            "ips": self._item_per_sec() if self._timecount else ''
         })
         self._lenpstr = len(self._pstr) if self._ips_colored is False else len(self._pstr)-9
         if self._lenpstr > self._maxpstr:
@@ -341,7 +342,7 @@ class Spinner(threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
         self._finished = False
-        self._spinner = itertools.cycle(['-', '/', '|', '\\'])
+        self._spinner = itertools.cycle(['|', '/', '-', '\\'])
 
     def run(self):
         sys.stdout.write(self._spinner.next())
