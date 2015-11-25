@@ -1,14 +1,14 @@
 
-import test
+from . import TestStdoutReader
 import pyprogress
 
 
-class TestCounter(test.TestStdoutReader):
+class TestCounter(TestStdoutReader):
 
     def tearDown(self):
         self.c.stop()
         self.c.join()
-        test.TestStdoutReader.tearDown(self)
+        TestStdoutReader.tearDown(self)
 
     def test_counter_no_total(self):
         output = ['0', '\b1', '\b2', '\b3', '\b4', '\b5']

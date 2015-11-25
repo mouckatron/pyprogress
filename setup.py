@@ -17,6 +17,7 @@ setup(name='pyprogress',
       packages=find_packages(exclude=['ez_setup', 'examples', 'tests']),
       include_package_data=True,
       zip_safe=False,
+      test_suite='tests',
       install_requires=[
           # -*- Extra requirements: -*-
       ],

@@ -1,10 +1,10 @@
 
-import test
+from . import TestStdoutReader
 import pyprogress
 from time import sleep
 
 
-class TestSpinner(test.TestStdoutReader):
+class TestSpinner(TestStdoutReader):
 
     def test_spinner(self):
         output = ['|', '\b', '/', '\b', '-', '\b', '\\', '\b', '|', '\b', '/', '\b', '-', '\b']
