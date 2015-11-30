@@ -1,7 +1,7 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1.dev1'
+version = '0.1.dev2'
 
 setup(name='pyprogress',
       version=version,

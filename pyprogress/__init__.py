@@ -31,7 +31,7 @@ class ProgressBar(object):
         self._maxpstr = 0
 
         self._ended = False
-        self._timecount = timecount
+        self._timecount = True if completionprediction else timecount
         self._runtime = None
         self._completionprediction = completionprediction
         self._cp_timeavg = None
@@ -56,7 +56,7 @@ class ProgressBar(object):
         try:
             _value = float(self._progress) / self._runtime.seconds
         except ZeroDivisionError:
-            return None
+            return '0'
         else:
             if self._ips_colored:
                 if _value >= self._ips_previous:

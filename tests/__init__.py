@@ -13,3 +13,7 @@ class TestStdoutReader(unittest.TestCase):
 
     def tearDown(self):
         sys.stdout = self.orig_stdout
+
+    def _pse(self, instr):
+        """Convenience function to print to stderr because we're redirecting stdout to a StringIO object"""
+        print >> sys.stderr, instr
