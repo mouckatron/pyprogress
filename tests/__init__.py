@@ -1,8 +1,10 @@
 
 import unittest
-from StringIO import StringIO
 import sys
-
+try:
+    from StringIO import StringIO
+except ImportError:
+    from io import StringIO
 
 class TestStdoutReader(unittest.TestCase):
 

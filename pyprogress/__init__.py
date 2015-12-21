@@ -200,10 +200,11 @@ class DoubleProgressBar(ProgressBar):
                 self._cp_sizecnt2 = 0
                 self._cp_sizeavg2 = 0
 
-        self._pstr2_fmt = " [{pc:%s}]%s%s {ips}/s" % (
-                                                          int((width/2.0)),
-                                                          " {p}/{t}" if showcounter else "",
-                                                          "  total:{tc}" if totalcount else "")
+        self._pstr2_fmt = " [{pc:%s}]%s%s%s" % (
+            int((width/2.0)),
+            " {p}/{t}" if showcounter else "",
+            "  total:{tc}" if totalcount else "",
+            " {ips}/s" if self._timecount else "")
 
     def _predict_completion(self):
         try:
@@ -244,9 +245,9 @@ class DoubleProgressBar(ProgressBar):
         self._progress2 = progress
         self._write()
 
-    def inc2(self):
-        self._totalcount += 1
-        self._progress2 += 1
+    def inc2(self, value=1):
+        self._totalcount += value
+        self._progress2 += value
         self._write()
 
     def reset2(self):
@@ -257,13 +258,22 @@ class DoubleProgressBar(ProgressBar):
         self.write()
 
     def write(self):
+
         sys.stdout.write("\b"*self._maxpstr)
         if self._timecount is not False:
             self._runtime = (datetime.datetime.utcnow() - self._timecount)
+        try:
+            pc = self._progresschar * int(((self._width/self._total)*self._progress))
+        except ZeroDivisionError:
+            pc = ""
+        finally:
+            if len(pc) > int(self._width):
+                pc = pc[:int(self._width)]
+
         self._pstr = self._pstr_fmt.format(**{
             "timecount": (str(self._runtime) if self._timecount else ''),
             "completionprediction": (str(self._predict_completion()) if self._completionprediction else ''),
-            "pc": self._progresschar * int(((self._width/self._total)*self._progress)),
+            "pc": pc,
             "p": self._progress,
             "t": self._total
         })
@@ -271,12 +281,15 @@ class DoubleProgressBar(ProgressBar):
             "p": self._progress2,
             "t": self._total2,
             "tc": self._totalcount if self.totalcount is not None else '',
-            "ips": self._item_per_sec()
+            "ips": self._item_per_sec() if self._timecount else ''
         }
         try:
             fmt2['pc'] = self._progresschar * int((((self._width/2.0)/self._total2)*self._progress2))
         except ZeroDivisionError:
             fmt2['pc'] = ''
+        finally:
+            if len(fmt2['pc']) > (int(self._width) / 2):
+                fmt2['pc'] = fmt2['pc'][:(int(self._width) / 2)]
         self._pstr2 = self._pstr2_fmt.format(**fmt2)
         self._lenpstr = len(self._pstr+self._pstr2) if self._ips_colored is False else len(self._pstr+self._pstr2)-9
         if self._lenpstr > self._maxpstr:
@@ -344,9 +357,9 @@ class Spinner(threading.Thread):
         self._spinner = itertools.cycle(['|', '/', '-', '\\'])
 
     def run(self):
-        sys.stdout.write(self._spinner.next())
+        sys.stdout.write(next(self._spinner))
         while not self._finished:
-            sys.stdout.write("\b{}".format(self._spinner.next()))  # write the next character
+            sys.stdout.write("\b{}".format(next(self._spinner)))  # write the next character
             sys.stdout.flush()                # flush stdout buffer (actual character display)
             time.sleep(0.5)
 
