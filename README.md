@@ -5,6 +5,9 @@ CLI script progress output library
 See code for documentation
 
 Run the library standalone to see the different options in action
+``` 
+python -m pyprogress
+```
 
 ProgressBar
 ----------
