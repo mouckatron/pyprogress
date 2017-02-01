@@ -1,5 +1,5 @@
 #! /usr/bin/python2.7
-#-*- coding: utf-8 -*-
+# -*- coding: utf-8 -*-
 
 import sys
 
@@ -34,7 +34,8 @@ def main():
         c.stop()
     c.join()
 
-    print ""
+    sys.stdout.write("\n")
+    sys.stdout.flush()
 
 if __name__ == '__main__':
     main()
