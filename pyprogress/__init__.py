@@ -7,7 +7,7 @@ import time
 
 
 class ProgressBar(object):
-    """Show a progress bar and update it everytime increment is called"""
+    """Show a progress bar and update it every time increment is called"""
     def __init__(self, total, width=40, name="", showcounter=True, progresschar="#", timecount=False, completionprediction=False, colored=False):
         """
         :param int total: The total count of items being worked on
@@ -31,9 +31,9 @@ class ProgressBar(object):
 
         self._ended = False
         self._timecount = True if completionprediction else timecount
-        self._runtime = None
+        self._runtime = 0
         self._completionprediction = completionprediction
-        self._cp_timeavg = None
+        self._cp_timeavg = 0
         self._ips_previous = 0
 
         self._pstr_fmt = "%s%s[{pc:%s}]%s%s" % ("{timecount} " if timecount else "",
@@ -55,7 +55,10 @@ class ProgressBar(object):
         try:
             _value = float(self._progress) / self._runtime.seconds
         except ZeroDivisionError:
-            return '0'
+            if self._ips_colored:
+                return "\033[30m0\033[0m"
+            else:
+                return '0'
         else:
             if self._ips_colored:
                 if _value >= self._ips_previous:
@@ -96,7 +99,6 @@ class ProgressBar(object):
         self.write()
 
     def write(self):
-
         sys.stdout.write("\b"*self._maxpstr)
         if self._timecount is not False:
             self._runtime = (datetime.datetime.utcnow() - self._timecount)
@@ -288,8 +290,8 @@ class DoubleProgressBar(ProgressBar):
         except ZeroDivisionError:
             fmt2['pc'] = ''
         finally:
-            if len(fmt2['pc']) > (int(self._width) / 2):
-                fmt2['pc'] = fmt2['pc'][:(int(self._width) / 2)]
+            if len(fmt2['pc']) > int(int(self._width) / 2):
+                fmt2['pc'] = fmt2['pc'][:int(int(self._width) / 2)]
         self._pstr2 = self._pstr2_fmt.format(**fmt2)
         self._lenpstr = len(self._pstr+self._pstr2) if self._ips_colored is False else len(self._pstr+self._pstr2)-9
         if self._lenpstr > self._maxpstr:

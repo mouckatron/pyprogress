@@ -1,14 +1,14 @@
 from setuptools import setup, find_packages
 import sys, os
 
-version = '0.1.1'
+version = '0.1.3'
 
 setup(name='pyprogress',
       version=version,
       description="Various command line progress bars, spinners and counters including threaded versions",
       long_description="""\
 """,
-      classifiers=[], # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
+      classifiers=[],  # Get strings from http://pypi.python.org/pypi?%3Aaction=list_classifiers
       keywords='progress spinner counter cli timer completion',
       author='Graham Moucka',
       author_email='mouckatron@gmail.com',
@@ -21,7 +21,9 @@ setup(name='pyprogress',
       install_requires=[
           # -*- Extra requirements: -*-
       ],
-      entry_points="""
-      # -*- Entry points: -*-
-      """,
+      entry_points={
+          'console_scripts': [
+              'countoutput = pyprogress.countoutput:main',
+          ]
+      },
       )
