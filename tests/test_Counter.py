@@ -19,7 +19,7 @@ class TestCounter(TestStdoutReader):
         for x in range(1, 6):
             self.c.inc()
             self.c.write()  # force write output
-            assert self.stdout.getvalue().strip() == output[x]
+            assert self.stdout.getvalue().strip('\x00').strip() == output[x]
             self.stdout.truncate(0)
 
     def test_counter_with_total(self):
@@ -31,7 +31,7 @@ class TestCounter(TestStdoutReader):
         for x in range(1, 6):
             self.c.inc()
             self.c.write()  # force write output
-            assert self.stdout.getvalue().strip() == output[x]
+            assert self.stdout.getvalue().strip('\x00').strip() == output[x]
             self.stdout.truncate(0)
 
     def test_counter_initial(self):
@@ -43,7 +43,7 @@ class TestCounter(TestStdoutReader):
         for x in range(1, 4):
             self.c.inc()
             self.c.write()  # force write output
-            assert self.stdout.getvalue().strip() == output[x]
+            assert self.stdout.getvalue().strip('\x00').strip() == output[x]
             self.stdout.truncate(0)
 
     def test_counter_inc_2(self):
@@ -60,5 +60,5 @@ class TestCounter(TestStdoutReader):
         for x in range(1, 6):
             self.c.inc(2)
             self.c.write()
-            assert self.stdout.getvalue().strip() == output[x]
+            assert self.stdout.getvalue().strip('\x00').strip() == output[x]
             self.stdout.truncate(0)

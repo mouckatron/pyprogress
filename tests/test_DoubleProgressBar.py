@@ -1,8 +1,6 @@
 from . import TestStdoutReader
 import pyprogress
 import re
-from time import sleep
-import sys
 
 
 class TestDoubleProgressBar(TestStdoutReader):
@@ -33,12 +31,12 @@ class TestDoubleProgressBar(TestStdoutReader):
         for x in range(2):
             for y in range(5):
                 self.p.inc2(2)
-                assert re.match(outputs[i], self.stdout.getvalue().strip())
+                assert re.match(outputs[i], self.stdout.getvalue().strip('\x00').strip())
                 i += 1
                 self.stdout.truncate(0)
             self.p.inc()
             self.stdout.truncate(0)
             self.p.reset2()
-            assert re.match(outputs[i], self.stdout.getvalue().strip())
+            assert re.match(outputs[i], self.stdout.getvalue().strip('\x00').strip())
             i += 1
             self.stdout.truncate(0)

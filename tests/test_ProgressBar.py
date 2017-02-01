@@ -14,16 +14,16 @@ class TestProgressBar(TestStdoutReader):
     def test_progressbar_default(self):
         outputs = [
             '[                                        ] 0/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[####                                    ] 1/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########                                ] 2/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[############                            ] 3/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################                        ] 4/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[####################                    ] 5/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################                ] 6/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[############################            ] 7/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################################        ] 8/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[####################################    ] 9/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 10/10'
+            '[\b]{47}\[#{4} {36}\] 1/10',
+            '[\b]{47}\[#{8} {32}\] 2/10',
+            '[\b]{47}\[#{12} {28}\] 3/10',
+            '[\b]{47}\[#{16} {24}\] 4/10',
+            '[\b]{47}\[#{20} {20}\] 5/10',
+            '[\b]{47}\[#{24} {16}\] 6/10',
+            '[\b]{47}\[#{28} {12}\] 7/10',
+            '[\b]{47}\[#{32} {8}\] 8/10',
+            '[\b]{47}\[#{36} {4}\] 9/10',
+            '[\b]{47}\[#{40}\] 10/10'
         ]
         self.p = pyprogress.ProgressBar(10)
         self.p.begin()
@@ -32,7 +32,7 @@ class TestProgressBar(TestStdoutReader):
 
         for x in range(1, 11):
             self.p.inc()
-            assert self.stdout.getvalue().strip() == outputs[x]
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
 
     def test_progressbar_inc2(self):
@@ -50,7 +50,7 @@ class TestProgressBar(TestStdoutReader):
         self.stdout.truncate(0)
         for x in range(1, 6):
             self.p.inc(2)
-            assert self.stdout.getvalue().strip() == outputs[x]
+            assert self.stdout.getvalue().strip('\x00').strip() == outputs[x]
             self.stdout.truncate(0)
 
     def test_progressbar_expandpastlimit(self):
@@ -73,11 +73,11 @@ class TestProgressBar(TestStdoutReader):
         self.stdout.truncate(0)
         for x in range(1, 11):
             self.p.inc(2)
-            if self.stdout.getvalue().strip() != outputs[x]:
+            if self.stdout.getvalue().strip('\x00').strip() != outputs[x]:
                 print >> sys.stderr, "\n"
                 print >> sys.stderr, repr(outputs[x])
                 print >> sys.stderr, repr(self.stdout.getvalue().strip())
-            assert self.stdout.getvalue().strip() == outputs[x]
+            assert self.stdout.getvalue().strip('\x00').strip() == outputs[x]
             self.stdout.truncate(0)
 
     def test_progressbar_withname(self):
@@ -100,7 +100,7 @@ class TestProgressBar(TestStdoutReader):
         self.stdout.truncate(0)
         for x in range(1, 11):
             self.p.inc()
-            assert self.stdout.getvalue().strip() == outputs[x]
+            assert self.stdout.getvalue().strip('\x00').strip() == outputs[x]
             self.stdout.truncate(0)
 
     def test_progressbar_expandpastlimitwithname(self):
@@ -123,7 +123,7 @@ class TestProgressBar(TestStdoutReader):
         self.stdout.truncate(0)
         for x in range(1, 11):
             self.p.inc(2)
-            assert self.stdout.getvalue().strip() == outputs[x]
+            assert self.stdout.getvalue().strip('\x00').strip() == outputs[x]
             self.stdout.truncate(0)
 
     def test_progressbar_withruntime(self):
@@ -142,7 +142,7 @@ class TestProgressBar(TestStdoutReader):
         sleep(1)
         for x in range(1, 6):
             self.p.inc(1)
-            assert re.match(outputs[x], self.stdout.getvalue().strip())
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
             sleep(1)
 
@@ -162,7 +162,7 @@ class TestProgressBar(TestStdoutReader):
         sleep(1)
         for x in range(1, 6):
             self.p.inc(1)
-            assert re.match(outputs[x], self.stdout.getvalue().strip())
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
             sleep(1)
 
@@ -186,7 +186,7 @@ class TestProgressBar(TestStdoutReader):
         self.stdout.truncate(0)
         for x in range(1, 11):
             self.p.inc(1)
-            assert re.match(outputs[x], self.stdout.getvalue().strip())
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
 
     def test_progressbar_changewidth(self):
@@ -207,7 +207,7 @@ class TestProgressBar(TestStdoutReader):
         self.stdout.truncate(0)
         for x in range(1, 9):
             self.p.inc(1)
-            assert re.match(outputs[x], self.stdout.getvalue().strip())
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
 
     def test_progressbar_coloredips(self):
@@ -226,7 +226,7 @@ class TestProgressBar(TestStdoutReader):
         sleep(1)
         for x in range(1, 6):
             self.p.inc(1)
-            assert re.match(outputs[x], self.stdout.getvalue().strip())
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
             sleep(1)
 
@@ -261,6 +261,6 @@ class TestProgressBar(TestStdoutReader):
         sleep(0.5)
         for x in range(1, 21):
             self.p.inc(1)
-            assert re.match(outputs[x], self.stdout.getvalue().strip())
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
             sleep(0.5)
