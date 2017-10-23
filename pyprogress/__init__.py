@@ -401,9 +401,6 @@ class Counter(threading.Thread):
     def inc(self, value=1):
         self.counter += value
 
-    def write(self):
-        s = self._pstr_fmt.format(
-
     def _write1(self):
         """ write with total """
         s = "{}/{}".format(self.counter, self.total)
