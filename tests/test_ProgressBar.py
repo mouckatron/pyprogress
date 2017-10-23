@@ -2,6 +2,7 @@
 from . import TestStdoutReader
 import pyprogress
 import re
+import sys
 from time import sleep
 
 
@@ -13,7 +14,7 @@ class TestProgressBar(TestStdoutReader):
 
     def test_progressbar_default(self):
         outputs = [
-            '[                                        ] 0/10',
+            '\[ {40}\] 0/10',
             '[\b]{47}\[#{4} {36}\] 1/10',
             '[\b]{47}\[#{8} {32}\] 2/10',
             '[\b]{47}\[#{12} {28}\] 3/10',
@@ -27,7 +28,7 @@ class TestProgressBar(TestStdoutReader):
         ]
         self.p = pyprogress.ProgressBar(10)
         self.p.begin()
-        assert self.stdout.getvalue().strip() == outputs[0]
+        assert re.match(outputs[0], self.stdout.getvalue().strip())
         self.stdout.truncate(0)
 
         for x in range(1, 11):
@@ -37,93 +38,89 @@ class TestProgressBar(TestStdoutReader):
 
     def test_progressbar_inc2(self):
         outputs = [
-            '[                                        ] 0/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########                                ] 2/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################                        ] 4/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################                ] 6/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################################        ] 8/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 10/10'
+            '\[ {40}\] 0/10',
+            '\b{47}\[#{8} {32}\] 2/10',
+            '\b{47}\[#{16} {24}\] 4/10',
+            '\b{47}\[#{24} {16}\] 6/10',
+            '\b{47}\[#{32} {8}\] 8/10',
+            '\b{47}\[#{40}\] 10/10'
         ]
         self.p = pyprogress.ProgressBar(10)
         self.p.begin()
-        assert self.stdout.getvalue().strip() == outputs[0]
+        assert re.match(outputs[0], self.stdout.getvalue().strip())
         self.stdout.truncate(0)
         for x in range(1, 6):
             self.p.inc(2)
-            assert self.stdout.getvalue().strip('\x00').strip() == outputs[x]
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
 
     def test_progressbar_expandpastlimit(self):
         outputs = [
-            '[                                        ] 0/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########                                ] 2/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################                        ] 4/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################                ] 6/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################################        ] 8/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 10/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 12/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 14/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 16/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 18/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 20/10'
+            '\[ {40}\] 0/10',
+            '\b{47}\[#{8} {32}\] 2/10',
+            '\b{47}\[#{16} {24}\] 4/10',
+            '\b{47}\[#{24} {16}\] 6/10',
+            '\b{47}\[#{32} {8}\] 8/10',
+            '\b{47}\[#{40}\] 10/10',
+            '\b{48}\[#{40}\] 12/10',
+            '\b{48}\[#{40}\] 14/10',
+            '\b{48}\[#{40}\] 16/10',
+            '\b{48}\[#{40}\] 18/10',
+            '\b{48}\[#{40}\] 20/10'
         ]
         self.p = pyprogress.ProgressBar(10)
         self.p.begin()
-        assert self.stdout.getvalue().strip() == outputs[0]
+        assert re.match(outputs[0], self.stdout.getvalue().strip())
         self.stdout.truncate(0)
         for x in range(1, 11):
             self.p.inc(2)
-            if self.stdout.getvalue().strip('\x00').strip() != outputs[x]:
-                print >> sys.stderr, "\n"
-                print >> sys.stderr, repr(outputs[x])
-                print >> sys.stderr, repr(self.stdout.getvalue().strip())
-            assert self.stdout.getvalue().strip('\x00').strip() == outputs[x]
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
 
     def test_progressbar_withname(self):
         outputs = [
-            'ProgressBar [                                        ] 0/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[####                                    ] 1/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########                                ] 2/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[############                            ] 3/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################                        ] 4/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[####################                    ] 5/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################                ] 6/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[############################            ] 7/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################################        ] 8/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[####################################    ] 9/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 10/10'
+            'ProgressBar \[ {40}\] 0/10',
+            '\b{47}\[#{4} {36}\] 1/10',
+            '\b{47}\[#{8} {32}\] 2/10',
+            '\b{47}\[#{12} {28}\] 3/10',
+            '\b{47}\[#{16} {24}\] 4/10',
+            '\b{47}\[#{20} {20}\] 5/10',
+            '\b{47}\[#{24} {16}\] 6/10',
+            '\b{47}\[#{28} {12}\] 7/10',
+            '\b{47}\[#{32} {8}\] 8/10',
+            '\b{47}\[#{36} {4}\] 9/10',
+            '\b{47}\[#{40}\] 10/10'
         ]
         self.p = pyprogress.ProgressBar(10, name="ProgressBar")
         self.p.begin()
-        assert self.stdout.getvalue().strip() == outputs[0]
+        assert re.match(outputs[0], self.stdout.getvalue().strip())
         self.stdout.truncate(0)
         for x in range(1, 11):
             self.p.inc()
-            assert self.stdout.getvalue().strip('\x00').strip() == outputs[x]
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
 
     def test_progressbar_expandpastlimitwithname(self):
         outputs = [
-            'ProgressBar [                                        ] 0/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########                                ] 2/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################                        ] 4/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################                ] 6/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[################################        ] 8/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 10/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 12/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 14/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 16/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 18/10',
-            '\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[########################################] 20/10'
+            'ProgressBar \[ {40}\] 0/10',
+            '\b{47}\[#{8} {32}\] 2/10',
+            '\b{47}\[#{16} {24}\] 4/10',
+            '\b{47}\[#{24} {16}\] 6/10',
+            '\b{47}\[#{32} {8}\] 8/10',
+            '\b{47}\[#{40}\] 10/10',
+            '\b{48}\[#{40}\] 12/10',
+            '\b{48}\[#{40}\] 14/10',
+            '\b{48}\[#{40}\] 16/10',
+            '\b{48}\[#{40}\] 18/10',
+            '\b{48}\[#{40}\] 20/10'
         ]
         self.p = pyprogress.ProgressBar(10, name="ProgressBar")
         self.p.begin()
-        assert self.stdout.getvalue().strip() == outputs[0]
+        assert re.match(outputs[0], self.stdout.getvalue().strip())
         self.stdout.truncate(0)
         for x in range(1, 11):
             self.p.inc(2)
-            assert self.stdout.getvalue().strip('\x00').strip() == outputs[x]
+            assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
 
     def test_progressbar_withruntime(self):
@@ -168,17 +165,17 @@ class TestProgressBar(TestStdoutReader):
 
     def test_progressbar_changeprogresschar(self):
         outputs = [
-            '\[                                        \] 0\/10',
-            '\b{47}\[----                                    \] 1\/10',
-            '\b{47}\[--------                                \] 2\/10',
-            '\b{47}\[------------                            \] 3\/10',
-            '\b{47}\[----------------                        \] 4\/10',
-            '\b{47}\[--------------------                    \] 5\/10',
-            '\b{47}\[------------------------                \] 6\/10',
-            '\b{47}\[----------------------------            \] 7\/10',
-            '\b{47}\[--------------------------------        \] 8\/10',
-            '\b{47}\[------------------------------------    \] 9\/10',
-            '\b{47}\[----------------------------------------\] 10\/10'
+            '\[ {40}\] 0\/10',
+            '\b{47}\[-{4} {36}\] 1\/10',
+            '\b{47}\[-{8} {32}\] 2\/10',
+            '\b{47}\[-{12} {28}\] 3\/10',
+            '\b{47}\[-{16} {24}\] 4\/10',
+            '\b{47}\[-{20} {20}\] 5\/10',
+            '\b{47}\[-{24} {16}\] 6\/10',
+            '\b{47}\[-{28} {12}\] 7\/10',
+            '\b{47}\[-{32} {8}\] 8\/10',
+            '\b{47}\[-{36} {4}\] 9\/10',
+            '\b{47}\[-{40}\] 10\/10'
         ]
         self.p = pyprogress.ProgressBar(10, progresschar='-')
         self.p.begin()
