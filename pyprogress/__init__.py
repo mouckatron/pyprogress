@@ -374,7 +374,7 @@ class Spinner(threading.Thread):
 
 class Counter(threading.Thread):
 
-    def __init__(self, total=None, initial=0):
+    def __init__(self, total=None, initial=0, timecount=False, completionprediction=False, colored=False):
         """Simple progress counter
 
         :param total: The total items being worked on if available
@@ -386,11 +386,23 @@ class Counter(threading.Thread):
         self._finished = False
         self.counter = initial
         self.total = total
+        self._timecount = True if completionprediction else timecount
+        self._completionprediction = completionprediction
+        self._runtime = 0
+        self._cp_timeavg = 0
+        self._ips_previous = 0
+        self._pstr_fmt = "{counter}%s%s%s%s" % ("/{total}" if total else "",
+                                                " {timecount}" if timecount else "",
+                                                " {completionprediction}" if completionprediction else "",
+                                                " {ips}/s" if timecount else "")
         self.write = self._write1 if total is not None else self._write2
         self._strlen = 0
 
     def inc(self, value=1):
         self.counter += value
+
+    def write(self):
+        s = self._pstr_fmt.format(
 
     def _write1(self):
         """ write with total """
