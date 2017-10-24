@@ -42,6 +42,13 @@ class ProgressBar(object):
                                                 " {p}/{t}" if showcounter else "",
                                                 " {ips}/s" if not isinstance(self, DoubleProgressBar) and self._timecount else "")
 
+    def __enter__(self):
+        self.begin()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self.end()
+
     def __del__(self):
         self.end()
 
@@ -142,6 +149,10 @@ class ThreadedProgressBar(ProgressBar, threading.Thread):
         self._finished = False
         threading.Thread.__init__(self)
         self.daemon = True
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._finished = True
+        self.end()
 
     def run(self):
         self.begin()
@@ -330,6 +341,10 @@ class ThreadedDoubleProgressBar(DoubleProgressBar, threading.Thread):
         threading.Thread.__init__(self)
         self.daemon = True
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._finished = True
+        self.end()
+
     def run(self):
         self.begin()
         while not self._finished:
@@ -357,6 +372,13 @@ class Spinner(threading.Thread):
         self.daemon = True
         self._finished = False
         self._spinner = itertools.cycle(['|', '/', '-', '\\'])
+
+    def __enter__(self):
+        self.start()
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._finished = True
+        self.join()
 
     def run(self):
         sys.stdout.write(next(self._spinner))
@@ -397,6 +419,14 @@ class Counter(threading.Thread):
                                                 " {ips}/s" if timecount else "")
         self.write = self._write1 if total is not None else self._write2
         self._strlen = 0
+
+    def __enter__(self):
+        self.start()
+        return self
+
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        self._finished = True
+        self.join()
 
     def inc(self, value=1):
         self.counter += value

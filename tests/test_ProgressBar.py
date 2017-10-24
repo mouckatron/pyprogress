@@ -2,7 +2,6 @@
 from . import TestStdoutReader
 import pyprogress
 import re
-import sys
 from time import sleep
 
 
@@ -261,3 +260,75 @@ class TestProgressBar(TestStdoutReader):
             assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
             self.stdout.truncate(0)
             sleep(0.5)
+
+
+class TestProgressBarInContext(TestStdoutReader):
+
+    def tearDown(self):
+        TestStdoutReader.tearDown(self)
+
+    def test_progressbar_default(self):
+        outputs = [
+            '\[ {40}\] 0/10',
+            '[\b]{47}\[#{4} {36}\] 1/10',
+            '[\b]{47}\[#{8} {32}\] 2/10',
+            '[\b]{47}\[#{12} {28}\] 3/10',
+            '[\b]{47}\[#{16} {24}\] 4/10',
+            '[\b]{47}\[#{20} {20}\] 5/10',
+            '[\b]{47}\[#{24} {16}\] 6/10',
+            '[\b]{47}\[#{28} {12}\] 7/10',
+            '[\b]{47}\[#{32} {8}\] 8/10',
+            '[\b]{47}\[#{36} {4}\] 9/10',
+            '[\b]{47}\[#{40}\] 10/10'
+        ]
+
+        with pyprogress.ProgressBar(10) as p:
+            assert re.match(outputs[0], self.stdout.getvalue().strip())
+            self.stdout.truncate(0)
+
+            for x in range(1, 11):
+                p.inc()
+                assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
+                self.stdout.truncate(0)
+
+    def test_progressbar_inc2(self):
+        outputs = [
+            '\[ {40}\] 0/10',
+            '\b{47}\[#{8} {32}\] 2/10',
+            '\b{47}\[#{16} {24}\] 4/10',
+            '\b{47}\[#{24} {16}\] 6/10',
+            '\b{47}\[#{32} {8}\] 8/10',
+            '\b{47}\[#{40}\] 10/10'
+        ]
+
+        with pyprogress.ProgressBar(10) as p:
+            assert re.match(outputs[0], self.stdout.getvalue().strip())
+            self.stdout.truncate(0)
+
+            for x in range(1, 6):
+                p.inc(2)
+                assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
+                self.stdout.truncate(0)
+
+    def test_progressbar_expandpastlimit(self):
+        outputs = [
+            '\[ {40}\] 0/10',
+            '\b{47}\[#{8} {32}\] 2/10',
+            '\b{47}\[#{16} {24}\] 4/10',
+            '\b{47}\[#{24} {16}\] 6/10',
+            '\b{47}\[#{32} {8}\] 8/10',
+            '\b{47}\[#{40}\] 10/10',
+            '\b{48}\[#{40}\] 12/10',
+            '\b{48}\[#{40}\] 14/10',
+            '\b{48}\[#{40}\] 16/10',
+            '\b{48}\[#{40}\] 18/10',
+            '\b{48}\[#{40}\] 20/10'
+        ]
+        with pyprogress.ProgressBar(10) as p:
+            assert re.match(outputs[0], self.stdout.getvalue().strip())
+            self.stdout.truncate(0)
+
+            for x in range(1, 11):
+                p.inc(2)
+                assert re.match(outputs[x], self.stdout.getvalue().strip('\x00').strip())
+                self.stdout.truncate(0)
